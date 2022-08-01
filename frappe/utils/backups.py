@@ -405,7 +405,7 @@ class BackupGenerator:
 				)
 
 			cmd_string = (
-				"{db_exc} --single-transaction --quick --lock-tables=false -u {user}"
+				"{db_exc} --single-transaction --quick --lock-tables=false  --column-statistics=0 -u {user}"
 				" -p{password} {db_name} -h {db_host} -P {db_port} {include} {exclude}"
 				" | {gzip} >> {backup_path_db}"
 			)
