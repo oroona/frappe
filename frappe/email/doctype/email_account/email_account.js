@@ -125,11 +125,10 @@ frappe.ui.form.on("Email Account", {
 
 	show_gmail_message_for_less_secure_apps: function(frm) {
 		frm.dashboard.clear_headline();
-		if (frm.doc.service==="GMail") {
-			let msg = __("GMail will only work if you enable 2-step authentication and use app-specific password.");
-			let cta = __("Read the step by step guide here.");
-			msg += ` <a target="_blank" href="https://docs.erpnext.com/docs/v13/user/manual/en/setting-up/email/email_account_setup_with_gmail">${cta}</a>`;
-			frm.dashboard.set_headline_alert(msg);
+		if(frm.doc.service==="GMail") {
+			frm.dashboard.set_headline_alert('Gmail will only work if you allow access for less secure \
+				apps in Gmail settings. <a target="_blank" \
+				href="https://support.google.com/accounts/answer/6010255?hl=en">Read this for details</a>');
 		}
 	},
 
@@ -152,6 +151,18 @@ frappe.ui.form.on("Email Account", {
 			callback: function (r) {
 				if (r.message) {
 					frm.events.set_domain_fields(frm, r.message);
+				} else {
+					frm.set_value("domain", "");
+					frappe.confirm(__('Email Domain not configured for this account, Create one?'),
+						function () {
+							frappe.model.with_doctype("Email Domain", function() {
+								frappe.route_options = { email_id: frm.doc.email_id };
+								frappe.route_flags.return_to_email_account = 1;
+								var doc = frappe.model.get_new_doc("Email Domain");
+								frappe.set_route("Form", "Email Domain", doc.name);
+							});
+						}
+					);
 				}
 			}
 		});

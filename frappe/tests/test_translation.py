@@ -2,10 +2,7 @@
 # MIT License. See license.txt
 from __future__ import unicode_literals
 
-import os
-import unittest
-
-import frappe
+import frappe, unittest, os
 import frappe.translate
 
 # class TestTranslations(unittest.TestCase):

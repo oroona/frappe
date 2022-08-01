@@ -6,6 +6,5 @@ from __future__ import unicode_literals
 # import frappe
 import unittest
 
-
 class TestWebTemplateField(unittest.TestCase):
 	pass

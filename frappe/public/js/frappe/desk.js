@@ -201,20 +201,19 @@ frappe.Application = Class.extend({
 
 	email_password_prompt: function(email_account,user,i) {
 		var me = this;
-		const email_id = email_account[i]["email_id"];
 		let d = new frappe.ui.Dialog({
 			title: __('Password missing in Email Account'),
 			fields: [
 				{
 					'fieldname': 'password',
 					'fieldtype': 'Password',
-					'label': __('Please enter the password for: <b>{0}</b>', [email_id], "Email Account"),
+					'label': __('Please enter the password for: <b>{0}</b>', [email_account[i]["email_id"]]),
 					'reqd': 1
 				},
 				{
 					"fieldname": "submit",
 					"fieldtype": "Button",
-					"label": __("Submit", null, "Submit password for Email Account")
+					"label": __("Submit")
 				}
 			]
 		});
@@ -231,7 +230,7 @@ frappe.Application = Class.extend({
 			s.fields_dict.checking.$wrapper.html('<i class="fa fa-spinner fa-spin fa-4x"></i>');
 			s.show();
 			frappe.call({
-				method: 'frappe.email.doctype.email_account.email_account.set_email_password',
+				method: 'frappe.core.doctype.user.user.set_email_password',
 				args: {
 					"email_account": email_account[i]["email_account"],
 					"user": user,
@@ -259,11 +258,16 @@ frappe.Application = Class.extend({
 		if(frappe.boot) {
 			this.setup_workspaces();
 			frappe.model.sync(frappe.boot.docs);
+			$.extend(frappe._messages, frappe.boot.__messages);
 			this.check_metadata_cache_status();
 			this.set_globals();
 			this.sync_pages();
 			frappe.router.setup();
-			this.setup_moment();
+			moment.locale("en");
+			moment.user_utc_offset = moment().utcOffset();
+			if(frappe.boot.timezone_info) {
+				moment.tz.add(frappe.boot.timezone_info);
+			}
 			if(frappe.boot.print_css) {
 				frappe.dom.set_style(frappe.boot.print_css, "print-style");
 			}
@@ -497,8 +501,7 @@ frappe.Application = Class.extend({
 		// 	"version": "12.2.0"
 		// }];
 
-		if (!Array.isArray(change_log) || !change_log.length ||
-			window.Cypress || cint(frappe.boot.sysdefaults.disable_change_log_notification)) {
+		if (!Array.isArray(change_log) || !change_log.length || window.Cypress) {
 			return;
 		}
 
@@ -518,8 +521,6 @@ frappe.Application = Class.extend({
 	},
 
 	show_update_available: () => {
-		if (frappe.boot.sysdefaults.disable_system_update_notification) return;
-
 		frappe.call({
 			"method": "frappe.utils.change_log.show_update_popup"
 		});
@@ -619,19 +620,6 @@ frappe.Application = Class.extend({
 				//
 			}
 		});
-	},
-
-	setup_moment() {
-		moment.updateLocale('en', {
-			week: {
-				dow: frappe.datetime.get_first_day_of_the_week_index(),
-			}
-		});
-		moment.locale("en");
-		moment.user_utc_offset = moment().utcOffset();
-		if (frappe.boot.timezone_info) {
-			moment.tz.add(frappe.boot.timezone_info);
-		}
 	}
 });
 

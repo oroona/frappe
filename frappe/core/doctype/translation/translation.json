@@ -1,4 +1,6 @@
 {
+ "_comments": "[]",
+ "_liked_by": "[]",
  "actions": [],
  "allow_import": 1,
  "autoname": "hash",
@@ -24,7 +26,6 @@
    "fieldtype": "Link",
    "label": "Language",
    "options": "Language",
-   "reqd": 1,
    "search_index": 1
   },
   {
@@ -42,7 +43,8 @@
   {
    "fieldname": "context",
    "fieldtype": "Data",
-   "label": "Context"
+   "label": "Context",
+   "read_only": 1
   },
   {
    "default": "0",
@@ -71,23 +73,20 @@
    "description": "If your data is in HTML, please copy paste the exact HTML code with the tags.",
    "fieldname": "source_text",
    "fieldtype": "Code",
-   "label": "Source Text",
-   "reqd": 1
+   "label": "Source Text"
   },
   {
    "fieldname": "translated_text",
    "fieldtype": "Code",
    "in_list_view": 1,
-   "label": "Translated Text",
-   "reqd": 1
+   "label": "Translated Text"
   }
  ],
  "links": [],
- "modified": "2022-07-04 06:53:54.997004",
+ "modified": "2020-03-12 13:28:48.223409",
  "modified_by": "Administrator",
  "module": "Core",
  "name": "Translation",
- "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -105,7 +104,6 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
  "title_field": "source_text",
  "track_changes": 1
 }

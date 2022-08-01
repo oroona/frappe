@@ -1,6 +1,5 @@
 import frappe
 
-
 def execute():
 	categories = frappe.get_list("Blog Category")
 	for category in categories:

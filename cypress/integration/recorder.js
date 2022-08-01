@@ -13,52 +13,56 @@ context('Recorder', () => {
 		});
 	});
 
+	it('Navigate to Recorder', () => {
+		cy.visit('/app');
+		cy.awesomebar('recorder');
+		cy.findByTitle('Recorder').should('exist');
+		cy.url().should('include', '/recorder/detail');
+	});
+
 	it('Recorder Empty State', () => {
-		cy.get('.page-head').findByTitle('Recorder').should('exist');
+		cy.findByTitle('Recorder').should('exist');
 
 		cy.get('.indicator-pill').should('contain', 'Inactive').should('have.class', 'red');
 
-		cy.get('.page-actions').findByRole('button', {name: 'Start'}).should('exist');
-		cy.get('.page-actions').findByRole('button', {name: 'Clear'}).should('exist');
+		cy.findByRole('button', {name: 'Start'}).should('exist');
+		cy.findByRole('button', {name: 'Clear'}).should('exist');
 
-		cy.get('.msg-box').should('contain', 'Recorder is Inactive');
-		cy.get('.msg-box').findByRole('button', {name: 'Start Recording'}).should('exist');
+		cy.get('.msg-box').should('contain', 'Inactive');
+		cy.findByRole('button', {name: 'Start Recording'}).should('exist');
 	});
 
 	it('Recorder Start', () => {
-		cy.get('.page-actions').findByRole('button', {name: 'Start'}).click();
+		cy.findByRole('button', {name: 'Start'}).click();
 		cy.get('.indicator-pill').should('contain', 'Active').should('have.class', 'green');
 
-		cy.get('.msg-box').should('contain', 'No Requests found');
+		cy.get('.msg-box').should('contain', 'No Requests');
 
 		cy.visit('/app/List/DocType/List');
 		cy.intercept('POST', '/api/method/frappe.desk.reportview.get').as('list_refresh');
 		cy.wait('@list_refresh');
 
-		cy.get('.page-head').findByTitle('DocType').should('exist');
+		cy.get('.title-text').should('contain', 'DocType');
 		cy.get('.list-count').should('contain', '20 of ');
 
 		cy.visit('/app/recorder');
-		cy.get('.page-head').findByTitle('Recorder').should('exist');
-		cy.get('.frappe-list .result-list').should('contain', '/api/method/frappe.desk.reportview.get');
+		cy.findByTitle('Recorder').should('exist');
+		cy.get('.result-list').should('contain', '/api/method/frappe.desk.reportview.get');
 	});
 
 	it('Recorder View Request', () => {
-		cy.get('.page-actions').findByRole('button', {name: 'Start'}).click();
+		cy.findByRole('button', {name: 'Start'}).click();
 
 		cy.visit('/app/List/DocType/List');
 		cy.intercept('POST', '/api/method/frappe.desk.reportview.get').as('list_refresh');
 		cy.wait('@list_refresh');
 
-		cy.get('.page-head').findByTitle('DocType').should('exist');
+		cy.get('.title-text').should('contain', 'DocType');
 		cy.get('.list-count').should('contain', '20 of ');
 
 		cy.visit('/app/recorder');
 
-		cy.get('.frappe-list .list-row-container span')
-			.contains('/api/method/frappe')
-			.should('be.visible')
-			.click({force: true});
+		cy.get('.list-row-container span').contains('/api/method/frappe').click();
 
 		cy.url().should('include', '/recorder/request');
 		cy.get('form').should('contain', '/api/method/frappe');

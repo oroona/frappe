@@ -1,6 +1,5 @@
 @import "grid";
 @import "color_picker";
-@import "icon_picker";
 @import "datepicker";
 
 // password
@@ -231,16 +230,6 @@ textarea.form-control {
 	background-color: var(--control-bg);
 	border-radius: var(--border-radius);
 	padding: var(--padding-md);
-
-	svg > rect {
-		fill: var(--control-bg) !important;
-	}
-	svg > g {
-		fill: var(--text-color) !important;
-	}
-	svg > text {
-		font-family: var(--font-stack) !important;
-	}
 }
 
 @media (min-width: 768px) {
@@ -346,10 +335,11 @@ textarea.form-control {
 .duration-picker {
 	position: absolute;
 	z-index: 999;
+
 	border-radius: var(--border-radius);
 	box-shadow: var(--shadow-sm);
 	background: var(--popover-bg);
-	width: max-content;
+
 	&:after,
 	&:before {
 		border: solid transparent;
@@ -461,11 +451,4 @@ button.data-pill {
 	color: var(--text-color);
 	justify-content: space-between;
 	align-items: center;
-}
-
-.capture-remove-btn {
-	position: absolute;
-	top: 0;
-	right: 0;
-	cursor: pointer;
 }

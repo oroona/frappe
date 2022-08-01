@@ -4,6 +4,5 @@
 # import frappe
 import unittest
 
-
 class TestWorkflowAction(unittest.TestCase):
 	pass

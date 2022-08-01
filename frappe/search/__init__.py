@@ -2,10 +2,9 @@
 # MIT License. See license.txt
 
 import frappe
-from frappe.search.full_text_search import FullTextSearch
-from frappe.search.website_search import WebsiteSearch
 from frappe.utils import cint
-
+from frappe.search.website_search import WebsiteSearch
+from frappe.search.full_text_search import FullTextSearch
 
 @frappe.whitelist(allow_guest=True)
 def web_search(query, scope=None, limit=20):

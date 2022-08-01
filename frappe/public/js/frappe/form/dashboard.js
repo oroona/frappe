@@ -5,6 +5,7 @@ frappe.ui.form.Dashboard = class FormDashboard {
 	constructor(opts) {
 		$.extend(this, opts);
 		this.setup_dashboard_sections();
+		this.set_open_count = frappe.utils.throttle(this.set_open_count, 500);
 	}
 
 	setup_dashboard_sections() {
@@ -178,6 +179,7 @@ frappe.ui.form.Dashboard = class FormDashboard {
 				return;
 			}
 			this.render_links();
+			this.set_open_count();
 			show = true;
 		}
 
@@ -204,7 +206,6 @@ frappe.ui.form.Dashboard = class FormDashboard {
 				$(this).removeClass('hidden');
 			}
 		});
-		!this.frm.is_new() && this.set_open_count();
 	}
 
 	init_data() {
@@ -283,11 +284,19 @@ frappe.ui.form.Dashboard = class FormDashboard {
 		$(frappe.render_template('form_links', this.data))
 			.appendTo(transactions_area_body);
 
-		this.render_report_links();
+		if (this.data.reports && this.data.reports.length) {
+			$(frappe.render_template('report_links', this.data))
+				.appendTo(transactions_area_body);
+		}
 
 		// bind links
 		transactions_area_body.find(".badge-link").on('click', function() {
 			me.open_document_list($(this).closest('.document-link'));
+		});
+
+		// bind reports
+		transactions_area_body.find(".report-link").on('click', function() {
+			me.open_report($(this).parent());
 		});
 
 		// bind open notifications
@@ -303,18 +312,6 @@ frappe.ui.form.Dashboard = class FormDashboard {
 		this.data_rendered = true;
 	}
 
-	render_report_links() {
-		let parent = this.transactions_area;
-		if (this.data.reports && this.data.reports.length) {
-			$(frappe.render_template('report_links', this.data))
-				.appendTo(parent);
-			// bind reports
-			parent.find(".report-link").on('click', (e) => {
-				this.open_report($(e.target).parent());
-			});
-		}
-	}
-
 	open_report($link) {
 		let report = $link.attr('data-report');
 
@@ -322,7 +319,6 @@ frappe.ui.form.Dashboard = class FormDashboard {
 			? (this.data.non_standard_fieldnames[report] || this.data.fieldname)
 			: this.data.fieldname;
 
-		frappe.provide('frappe.route_options');
 		frappe.route_options[fieldname] = this.frm.doc.name;
 		frappe.set_route("query-report", report);
 	}
@@ -366,7 +362,7 @@ frappe.ui.form.Dashboard = class FormDashboard {
 	}
 
 	set_open_count() {
-		if (!this.data || (!this.data.transactions || !this.data.fieldname)) {
+		if (!this.data.transactions || !this.data.fieldname) {
 			return;
 		}
 

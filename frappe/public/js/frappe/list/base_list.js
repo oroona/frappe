@@ -120,7 +120,7 @@ frappe.views.BaseList = class BaseList {
 			// df is passed
 			const df = fieldname;
 			fieldname = df.fieldname;
-			doctype = df.parent || doctype;
+			doctype = df.parent;
 		}
 
 		if (!this.fields) this.fields = [];
@@ -184,11 +184,6 @@ frappe.views.BaseList = class BaseList {
 		};
 
 		if (frappe.boot.desk_settings.view_switcher) {
-			/* @preserve
-			for translation, don't remove
-			__("List View") __("Report View") __("Dashboard View") __("Gantt View"),
-			__("Kanban View") __("Calendar View") __("Image View") __("Inbox View"),
-			__("Tree View") __("Map View") */
 			this.views_menu = this.page.add_custom_button_group(__('{0} View', [this.view_name]),
 				icon_map[this.view_name] || 'list');
 			this.views_list = new frappe.views.ListViewSelect({
@@ -235,7 +230,7 @@ frappe.views.BaseList = class BaseList {
 				item.shortcut
 			);
 			if (item.class) {
-				$item[0] && $item.addClass(item.class);
+				$item && $item.addClass(item.class);
 			}
 		});
 	}
@@ -376,10 +371,10 @@ frappe.views.BaseList = class BaseList {
 				$this.addClass("btn-info");
 
 				this.start = 0;
-				this.page_length = this.selected_page_count = $this.data().value;
+				this.page_length = $this.data().value;
+				this.refresh();
 			} else if ($this.is(".btn-more")) {
 				this.start = this.start + this.page_length;
-				this.page_length = this.selected_page_count || 20;
 			}
 			this.refresh();
 		});
@@ -390,14 +385,6 @@ frappe.views.BaseList = class BaseList {
 		return this.fields.map((f) =>
 			frappe.model.get_full_column_name(f[0], f[1])
 		);
-	}
-
-	get_group_by() {
-		let name_field = this.fields && this.fields.find(f => f[0] == 'name');
-		if (name_field) {
-			return frappe.model.get_full_column_name(name_field[0], name_field[1]);
-		}
-		return null;
 	}
 
 	setup_view() {
@@ -430,7 +417,6 @@ frappe.views.BaseList = class BaseList {
 			start: this.start,
 			page_length: this.page_length,
 			view: this.view,
-			group_by: this.get_group_by()
 		};
 	}
 
@@ -460,7 +446,6 @@ frappe.views.BaseList = class BaseList {
 			this.render();
 			this.after_render();
 			this.freeze(false);
-			this.reset_defaults();
 			if (this.settings.refresh) {
 				this.settings.refresh(this);
 			}
@@ -480,11 +465,6 @@ frappe.views.BaseList = class BaseList {
 		}
 
 		this.data = this.data.uniqBy((d) => d.name);
-	}
-
-	reset_defaults() {
-		this.page_length = this.page_length + this.start;
-		this.start = 0;
 	}
 
 	freeze() {

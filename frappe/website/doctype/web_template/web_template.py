@@ -8,10 +8,14 @@ import os
 from shutil import rmtree
 
 import frappe
-from frappe import _
 from frappe.model.document import Document
-from frappe.modules.export_file import get_module_path, scrub_dt_dn, write_document_file
 from frappe.website.render import clear_cache
+from frappe import _
+from frappe.modules.export_file import (
+	write_document_file,
+	get_module_path,
+	scrub_dt_dn,
+)
 
 
 class WebTemplate(Document):

@@ -2,10 +2,8 @@
 # MIT License. See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
-
+import unittest
 
 class TestBlogCategory(unittest.TestCase):
 	pass

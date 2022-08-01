@@ -53,7 +53,7 @@ frappe.ui.form.ControlGeolocation = frappe.ui.form.ControlData.extend({
 				}));
 			this.add_non_group_layers(data_layers, this.editableLayers);
 			try {
-				this.map.fitBounds(this.editableLayers.getBounds(), {
+				this.map.flyToBounds(this.editableLayers.getBounds(), {
 					padding: [50,50]
 				});
 			}
@@ -61,10 +61,10 @@ frappe.ui.form.ControlGeolocation = frappe.ui.form.ControlData.extend({
 				// suppress error if layer has a point.
 			}
 			this.editableLayers.addTo(this.map);
-		} else {
-			this.map.setView(frappe.utils.map_defaults.center, frappe.utils.map_defaults.zoom);
+			this.map._onResize();
+		} else if ((value===undefined) || (value == JSON.stringify(new L.FeatureGroup().toGeoJSON()))) {
+			this.locate_control.start();
 		}
-		this.map.invalidateSize();
 	},
 
 	bind_leaflet_map() {
@@ -92,7 +92,8 @@ frappe.ui.form.ControlGeolocation = frappe.ui.form.ControlData.extend({
 		});
 
 		L.Icon.Default.imagePath = '/assets/frappe/images/leaflet/';
-		this.map = L.map(this.map_id);
+		this.map = L.map(this.map_id).setView(frappe.utils.map_defaults.center,
+			frappe.utils.map_defaults.zoom);
 
 		L.tileLayer(frappe.utils.map_defaults.tiles,
 			frappe.utils.map_defaults.options).addTo(this.map);
@@ -140,8 +141,9 @@ frappe.ui.form.ControlGeolocation = frappe.ui.form.ControlData.extend({
 		};
 
 		// create control and add to map
-		this.drawControl = new L.Control.Draw(options);
-		this.map.addControl(this.drawControl);
+		var drawControl = new L.Control.Draw(options);
+
+		this.map.addControl(drawControl);
 
 		this.map.on('draw:created', (e) => {
 			var type = e.layerType,

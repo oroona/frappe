@@ -12,11 +12,8 @@ class BaseTimeline {
 		this.wrapper = this.timeline_wrapper;
 		this.timeline_items_wrapper = $(`<div class="timeline-items">`);
 		this.timeline_actions_wrapper = $(`
-			<div class="timeline-items timeline-actions">
-				<div class="timeline-item">
-					<div class="timeline-dot"></div>
-					<div class="timeline-content action-buttons"></div>
-				</div>
+			<div class="timeline-actions">
+				<div class="timeline-dot"></div>
 			</div>
 		`);
 
@@ -40,7 +37,7 @@ class BaseTimeline {
 			${label}
 		</button>`);
 		action_btn.click(action);
-		this.timeline_actions_wrapper.find('.action-buttons').append(action_btn);
+		this.timeline_actions_wrapper.append(action_btn);
 		return action_btn;
 	}
 
@@ -89,7 +86,7 @@ class BaseTimeline {
 		});
 		if (item.icon) {
 			timeline_item.append(`
-				<div class="timeline-badge" title='${item.title || frappe.utils.to_title_case(item.icon)}'>
+				<div class="timeline-badge">
 					${frappe.utils.icon(item.icon, item.icon_size || 'md')}
 				</div>
 			`);

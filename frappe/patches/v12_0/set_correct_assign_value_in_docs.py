@@ -1,6 +1,5 @@
 import frappe
-from frappe.query_builder.functions import Coalesce, GroupConcat
-
+from frappe.query_builder.functions import GroupConcat, Coalesce
 
 def execute():
 	frappe.reload_doc("desk", "doctype", "todo")
@@ -24,5 +23,5 @@ def execute():
 			doc.reference_name,
 			"_assign",
 			frappe.as_json(assignments),
-			update_modified=False,
+			update_modified=False
 		)

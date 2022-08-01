@@ -1,34 +1,25 @@
-# Copyright (c) 2021, Frappe Technologies Pvt. Ltd. and Contributors
-# License: MIT. See LICENSE
-import json
+# Copyright (c) 2015, Frappe Technologies Pvt. Ltd. and Contributors
+# MIT License. See license.txt
+
 import os
 import re
+import json
 import shutil
-from distutils.spawn import find_executable
-from subprocess import getoutput
 from tempfile import mkdtemp, mktemp
-from urllib.parse import urlparse
-
-import click
-import psutil
-from requests import head
-from requests.exceptions import HTTPError
-from simple_chalk import green
+from distutils.spawn import find_executable
 
 import frappe
 from frappe.utils.minify import JavascriptMinify
 
+import click
+import psutil
+from urllib.parse import urlparse
+from simple_chalk import green
+
+
 timestamps = {}
 app_paths = None
 sites_path = os.path.abspath(os.getcwd())
-
-
-class AssetsNotDownloadedError(Exception):
-	pass
-
-
-class AssetsDontExistError(HTTPError):
-	pass
 
 
 def download_file(url, prefix):
@@ -52,7 +43,10 @@ def build_missing_files():
 
 	for type in ["css", "js"]:
 		current_asset_files.extend(
-			["{0}/{1}".format(type, name) for name in os.listdir(os.path.join(sites_path, "assets", type))]
+			[
+				"{0}/{1}".format(type, name)
+				for name in os.listdir(os.path.join(sites_path, "assets", type))
+			]
 		)
 
 	with open(frappe_build) as f:
@@ -63,69 +57,36 @@ def build_missing_files():
 			missing_assets.append(asset)
 
 	if missing_assets:
-		from shlex import split
 		from subprocess import check_call
+		from shlex import split
 
 		click.secho("\nBuilding missing assets...\n", fg="yellow")
-		command = split("node rollup/build.js --files {0} --no-concat".format(",".join(missing_assets)))
+		command = split(
+			"node rollup/build.js --files {0} --no-concat".format(",".join(missing_assets))
+		)
 		check_call(command, cwd=os.path.join("..", "apps", "frappe"))
 
 
-def get_assets_link(frappe_head) -> str:
+def get_assets_link(frappe_head):
+	from subprocess import getoutput
+	from requests import head
+
 	tag = getoutput(
-		r"cd ../apps/frappe && git show-ref --tags -d | grep %s | sed -e 's,.*"
-		r" refs/tags/,,' -e 's/\^{}//'" % frappe_head
-	)
+			r"cd ../apps/frappe && git show-ref --tags -d | grep %s | sed -e 's,.*"
+			r" refs/tags/,,' -e 's/\^{}//'"
+			% frappe_head
+		)
 
 	if tag:
 		# if tag exists, download assets from github release
-		url = f"https://github.com/frappe/frappe/releases/download/{tag}/assets.tar.gz"
+		url = "https://github.com/frappe/frappe/releases/download/{0}/assets.tar.gz".format(tag)
 	else:
-		url = f"http://assets.frappeframework.com/{frappe_head}.tar.gz"
+		url = "http://assets.frappeframework.com/{0}.tar.gz".format(frappe_head)
 
 	if not head(url):
-		reference = f"Release {tag}" if tag else f"Commit {frappe_head}"
-		raise AssetsDontExistError(f"Assets for {reference} don't exist")
+		raise ValueError("URL {0} doesn't exist".format(url))
 
 	return url
-
-
-def fetch_assets(url, frappe_head):
-	click.secho("Retrieving assets...", fg="yellow")
-
-	prefix = mkdtemp(prefix="frappe-assets-", suffix=frappe_head)
-	assets_archive = download_file(url, prefix)
-
-	if not assets_archive:
-		raise AssetsNotDownloadedError(f"Assets could not be retrived from {url}")
-
-	print(f"\n{green('✔')} Downloaded Frappe assets from {url}")
-
-	return assets_archive
-
-
-def setup_assets(assets_archive):
-	import tarfile
-
-	directories_created = set()
-
-	click.secho("\nExtracting assets...\n", fg="yellow")
-	with tarfile.open(assets_archive) as tar:
-		for file in tar:
-			if not file.isdir():
-				dest = "." + file.name.replace("./frappe-bench/sites", "")
-				asset_directory = os.path.dirname(dest)
-				show = dest.replace("./assets/", "")
-
-				if asset_directory not in directories_created:
-					if not os.path.exists(asset_directory):
-						os.makedirs(asset_directory, exist_ok=True)
-					directories_created.add(asset_directory)
-
-				tar.makefile(file, dest)
-				print("{0} Restored {1}".format(green("✔"), show))
-
-	return directories_created
 
 
 def download_frappe_assets(verbose=True):
@@ -133,32 +94,54 @@ def download_frappe_assets(verbose=True):
 	commit HEAD.
 	Returns True if correctly setup else returns False.
 	"""
+	from subprocess import getoutput
+
+	assets_setup = False
 	frappe_head = getoutput("cd ../apps/frappe && git rev-parse HEAD")
 
-	if not frappe_head:
-		return False
-
-	try:
-		url = get_assets_link(frappe_head)
-		assets_archive = fetch_assets(url, frappe_head)
-		setup_assets(assets_archive)
-		build_missing_files()
-		return True
-
-	except AssetsDontExistError as e:
-		click.secho(str(e), fg="yellow")
-
-	except Exception as e:
-		# TODO: log traceback in bench.log
-		click.secho(str(e), fg="red")
-
-	finally:
+	if frappe_head:
 		try:
-			shutil.rmtree(os.path.dirname(assets_archive))
-		except Exception:
-			pass
+			url = get_assets_link(frappe_head)
+			click.secho("Retrieving assets...", fg="yellow")
+			prefix = mkdtemp(prefix="frappe-assets-", suffix=frappe_head)
+			assets_archive = download_file(url, prefix)
+			print("\n{0} Downloaded Frappe assets from {1}".format(green('✔'), url))
 
-	return False
+			if assets_archive:
+				import tarfile
+				directories_created = set()
+
+				click.secho("\nExtracting assets...\n", fg="yellow")
+				with tarfile.open(assets_archive) as tar:
+					for file in tar:
+						if not file.isdir():
+							dest = "." + file.name.replace("./frappe-bench/sites", "")
+							asset_directory = os.path.dirname(dest)
+							show = dest.replace("./assets/", "")
+
+							if asset_directory not in directories_created:
+								if not os.path.exists(asset_directory):
+									os.makedirs(asset_directory, exist_ok=True)
+								directories_created.add(asset_directory)
+
+							tar.makefile(file, dest)
+							print("{0} Restored {1}".format(green('✔'), show))
+
+				build_missing_files()
+				return True
+			else:
+				raise
+		except Exception:
+			# TODO: log traceback in bench.log
+			click.secho("An Error occurred while downloading assets...", fg="red")
+			assets_setup = False
+		finally:
+			try:
+				shutil.rmtree(os.path.dirname(assets_archive))
+			except Exception:
+				pass
+
+	return assets_setup
 
 
 def symlink(target, link_name, overwrite=False):
@@ -198,7 +181,7 @@ def symlink(target, link_name, overwrite=False):
 			os.replace(temp_link_name, link_name)
 		except AttributeError:
 			os.renames(temp_link_name, link_name)
-	except Exception:
+	except:
 		if os.path.islink(temp_link_name):
 			os.remove(temp_link_name)
 		raise
@@ -241,7 +224,7 @@ def bundle(no_compress, app=None, hard_link=False, verbose=False, skip_frappe=Fa
 
 	frappe_app_path = os.path.abspath(os.path.join(app_paths[0], ".."))
 	check_yarn()
-	frappe.commands.popen(command, cwd=frappe_app_path, env=get_node_env(), raise_err=True)
+	frappe.commands.popen(command, cwd=frappe_app_path, env=get_node_env())
 
 
 def watch(no_compress):
@@ -253,20 +236,19 @@ def watch(no_compress):
 	frappe_app_path = os.path.abspath(os.path.join(app_paths[0], ".."))
 	check_yarn()
 	frappe_app_path = frappe.get_app_path("frappe", "..")
-	frappe.commands.popen(
-		"{pacman} run watch".format(pacman=pacman), cwd=frappe_app_path, env=get_node_env()
-	)
+	frappe.commands.popen("{pacman} run watch".format(pacman=pacman),
+		cwd=frappe_app_path, env=get_node_env())
 
 
 def check_yarn():
 	if not find_executable("yarn"):
 		print("Please install yarn using below command and try again.\nnpm install -g yarn")
 
-
 def get_node_env():
-	node_env = {"NODE_OPTIONS": f"--max_old_space_size={get_safe_max_old_space_size()}"}
+	node_env = {
+		"NODE_OPTIONS": f"--max_old_space_size={get_safe_max_old_space_size()}"
+	}
 	return node_env
-
 
 def get_safe_max_old_space_size():
 	safe_max_old_space_size = 0
@@ -280,7 +262,6 @@ def get_safe_max_old_space_size():
 		pass
 
 	return safe_max_old_space_size
-
 
 def generate_assets_map():
 	symlinks = {}
@@ -326,7 +307,8 @@ def clear_broken_symlinks():
 
 
 def unstrip(message: str) -> str:
-	"""Pads input string on the right side until the last available column in the terminal"""
+	"""Pads input string on the right side until the last available column in the terminal
+	"""
 	_len = len(message)
 	try:
 		max_str = os.get_terminal_size().columns
@@ -347,9 +329,7 @@ def make_asset_dirs(hard_link=False):
 	symlinks = generate_assets_map()
 
 	for source, target in symlinks.items():
-		start_message = unstrip(
-			f"{'Copying assets from' if hard_link else 'Linking'} {source} to {target}"
-		)
+		start_message = unstrip(f"{'Copying assets from' if hard_link else 'Linking'} {source} to {target}")
 		fail_message = unstrip(f"Cannot {'copy' if hard_link else 'link'} {source} to {target}")
 
 		# Used '\r' instead of '\x1b[1K\r' to print entire lines in smaller terminal sizes
@@ -390,6 +370,7 @@ def clear_broken_symlinks():
 			os.remove(path)
 
 
+
 def unstrip(message):
 	try:
 		max_str = os.get_terminal_size().columns
@@ -406,9 +387,7 @@ def make_asset_dirs(hard_link=False):
 	symlinks = generate_assets_map()
 
 	for source, target in symlinks.items():
-		start_message = unstrip(
-			f"{'Copying assets from' if hard_link else 'Linking'} {source} to {target}"
-		)
+		start_message = unstrip(f"{'Copying assets from' if hard_link else 'Linking'} {source} to {target}")
 		fail_message = unstrip(f"Cannot {'copy' if hard_link else 'link'} {source} to {target}")
 
 		try:
@@ -523,8 +502,7 @@ def pack(target, sources, no_compress, verbose):
 def html_to_js_template(path, content):
 	"""returns HTML template content as Javascript code, adding it to `frappe.templates`"""
 	return """frappe.templates["{key}"] = '{content}';\n""".format(
-		key=path.rsplit("/", 1)[-1][:-5], content=scrub_html_template(content)
-	)
+		key=path.rsplit("/", 1)[-1][:-5], content=scrub_html_template(content))
 
 
 def scrub_html_template(content):
@@ -535,7 +513,7 @@ def scrub_html_template(content):
 	# strip comments
 	content = re.sub(r"(<!--.*?-->)", "", content)
 
-	return content.replace("'", "'")
+	return content.replace("'", "\'")
 
 
 def files_dirty():

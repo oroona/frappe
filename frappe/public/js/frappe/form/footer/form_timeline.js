@@ -77,14 +77,12 @@ class FormTimeline extends BaseTimeline {
 			const message = __("Add to this activity by mailing to {0}", [link.bold()]);
 
 			this.document_email_link_wrapper = $(`
-				<div class="timeline-item">
+				<div class="document-email-link-container">
 					<div class="timeline-dot"></div>
-					<div class="timeline-content">
-						<span>${message}</span>
-					</div>
+					<span class="ellipsis">${message}</span>
 				</div>
 			`);
-			this.timeline_actions_wrapper.append(this.document_email_link_wrapper);
+			this.timeline_wrapper.append(this.document_email_link_wrapper);
 
 			this.document_email_link_wrapper
 				.find('.document-email-link')
@@ -102,34 +100,20 @@ class FormTimeline extends BaseTimeline {
 
 	set_document_info() {
 		// TODO: handle creation via automation
-		const creation = comment_when(this.frm.doc.creation);
-		let creation_message =
-			frappe.utils.is_current_user(this.frm.doc.owner)
-				? __("You created this {0}", [creation], "Form timeline")
-				: __("{0} created this {1}",
-					[
-						this.get_user_link(this.frm.doc.owner),
-						creation
-					],
-					"Form timeline"
-				);
+		let creation_message = __("{0} created this {1}", [
+			this.get_user_link(this.frm.doc.owner),
+			comment_when(this.frm.doc.creation)
+		]);
 
-		const modified = comment_when(this.frm.doc.modified);
-		let modified_message =
-			frappe.utils.is_current_user(this.frm.doc.modified_by)
-				? __("You edited this {0}", [modified], "Form timeline")
-				: __("{0} edited this {1}",
-					[
-						this.get_user_link(this.frm.doc.modified_by),
-						modified
-					],
-					"Form timeline"
-				);
+		let modified_message = __("{0} edited this {1}", [
+			this.get_user_link(this.frm.doc.modified_by),
+			comment_when(this.frm.doc.modified),
+		]);
 
 		if (this.frm.doc.route && cint(frappe.boot.website_tracking_enabled)) {
 			let route = this.frm.doc.route;
 			frappe.utils.get_page_view_count(route).then((res) => {
-				let page_view_count_message = __('{0} Page views', [res.message], "Form timeline");
+				let page_view_count_message = __('{0} Page views', [res.message]);
 				this.add_timeline_item({
 					content: `${creation_message} • ${modified_message} • 	${page_view_count_message}`,
 					hide_timestamp: true
@@ -152,7 +136,6 @@ class FormTimeline extends BaseTimeline {
 			this.timeline_items.push(...this.get_energy_point_timeline_contents());
 			this.timeline_items.push(...this.get_version_timeline_contents());
 			this.timeline_items.push(...this.get_share_timeline_contents());
-			this.timeline_items.push(...this.get_workflow_timeline_contents());
 			this.timeline_items.push(...this.get_like_timeline_contents());
 			this.timeline_items.push(...this.get_custom_timeline_contents());
 			this.timeline_items.push(...this.get_assignment_timeline_contents());
@@ -170,21 +153,14 @@ class FormTimeline extends BaseTimeline {
 	get_view_timeline_contents() {
 		let view_timeline_contents = [];
 		(this.doc_info.views || []).forEach(view => {
-			const view_time = comment_when(view.creation);
-			let view_message = frappe.utils.is_current_user(view.owner)
-				? __("You viewed this {0}", [view_time], "Form timeline")
-				: __("{0} viewed this {1}",
-					[
-						this.get_user_link(view.owner),
-						view_time
-					],
-					"Form timeline"
-				);
-
+			let view_content = `
+				<a href="${frappe.utils.get_form_link('View Log', view.name)}">
+					${__("{0} viewed", [this.get_user_link(view.owner)])}
+				</a>
+			`;
 			view_timeline_contents.push({
 				creation: view.creation,
-				content: view_message,
-				hide_timestamp: true,
+				content: view_content,
 			});
 		});
 		return view_timeline_contents;
@@ -192,11 +168,9 @@ class FormTimeline extends BaseTimeline {
 
 	get_communication_timeline_contents() {
 		let communication_timeline_contents = [];
-		let icon_set = {Email: "mail", Phone: "call", Meeting: "calendar", Other: "dot-horizontal"};
 		(this.doc_info.communications|| []).forEach(communication => {
-			let medium = communication.communication_medium;
 			communication_timeline_contents.push({
-				icon: icon_set[medium],
+				icon: 'mail',
 				icon_size: 'sm',
 				creation: communication.creation,
 				is_card: true,
@@ -322,7 +296,7 @@ class FormTimeline extends BaseTimeline {
 		(this.doc_info.info_logs || []).forEach(info_log => {
 			info_timeline_contents.push({
 				creation: info_log.creation,
-				content: `${this.get_user_link(info_log.owner)} ${info_log.content}`,
+				content: `${this.get_user_link(info_log.comment_email)} ${info_log.content}`,
 			});
 		});
 		return info_timeline_contents;
@@ -365,24 +339,9 @@ class FormTimeline extends BaseTimeline {
 				icon_size: 'sm',
 				creation: like_log.creation,
 				content: __('{0} Liked', [this.get_user_link(like_log.owner)]),
-				title: "Like",
 			});
 		});
 		return like_timeline_contents;
-	}
-
-	get_workflow_timeline_contents() {
-		let workflow_timeline_contents = [];
-		(this.doc_info.workflow_logs || []).forEach(workflow_log => {
-			workflow_timeline_contents.push({
-				icon: 'branch',
-				icon_size: 'sm',
-				creation: workflow_log.creation,
-				content: `${this.get_user_link(workflow_log.owner)} ${__(workflow_log.content)}`,
-				title: "Workflow",
-			});
-		});
-		return workflow_timeline_contents;
 	}
 
 	get_custom_timeline_contents() {
@@ -445,13 +404,13 @@ class FormTimeline extends BaseTimeline {
 		}
 
 		if (this.frm.doctype === "Communication") {
-			args.message = "";
+			args.txt = "";
 			args.last_email = this.frm.doc;
 			args.recipients = this.frm.doc.sender;
 			args.subject = __("Re: {0}", [this.frm.doc.subject]);
 		} else {
 			const comment_value = frappe.markdown(this.frm.comment_box.get_value());
-			args.message = strip_html(comment_value) ? comment_value : '';
+			args.txt = strip_html(comment_value) ? comment_value : '';
 		}
 
 		new frappe.views.CommunicationComposer(args);
@@ -471,7 +430,7 @@ class FormTimeline extends BaseTimeline {
 		let content_wrapper = comment_wrapper.find('.content');
 
 		let delete_button = $();
-		if (frappe.model.can_delete("Comment") && (frappe.session.user == doc.owner || frappe.user.has_role("System Manager"))) {
+		if (frappe.model.can_delete("Comment")) {
 			delete_button = $(`
 				<button class="btn btn-link action-btn">
 					${frappe.utils.icon('close', 'sm')}

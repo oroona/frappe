@@ -50,31 +50,38 @@ frappe.search.AwesomeBar = Class.extend({
 
 		this.awesomplete = awesomplete;
 
-		$input.on("input", frappe.utils.debounce(function(e) {
+		$input.on("input", function(e) {
 			var value = e.target.value;
 			var txt = value.trim().replace(/\s\s+/g, ' ');
 			var last_space = txt.lastIndexOf(' ');
 			me.global_results = [];
+			// if(txt && txt.length > 1) {
+			// 	me.global.get_awesome_bar_options(txt.toLowerCase(), me);
+			// }
 
-			me.options = [];
+			var $this = $(this);
+			clearTimeout($this.data('timeout'));
 
-			if (txt && txt.length > 1) {
-				if (last_space !== -1) {
-					me.set_specifics(txt.slice(0, last_space), txt.slice(last_space+1));
+			$this.data('timeout', setTimeout(function(){
+				me.options = [];
+				if(txt && txt.length > 1) {
+					if(last_space !== -1) {
+						me.set_specifics(txt.slice(0,last_space), txt.slice(last_space+1));
+					}
+					me.add_defaults(txt);
+					me.options = me.options.concat(me.build_options(txt));
+					me.options = me.options.concat(me.global_results);
+				} else {
+					me.options = me.options.concat(
+						me.deduplicate(frappe.search.utils.get_recent_pages(txt || "")));
+					me.options = me.options.concat(frappe.search.utils.get_frequent_links());
 				}
-				me.add_defaults(txt);
-				me.options = me.options.concat(me.build_options(txt));
-				me.options = me.options.concat(me.global_results);
-			} else {
-				me.options = me.options.concat(
-					me.deduplicate(frappe.search.utils.get_recent_pages(txt || "")));
-				me.options = me.options.concat(frappe.search.utils.get_frequent_links());
-			}
-			me.add_help();
+				me.add_help();
 
-			awesomplete.list = me.deduplicate(me.options);
+				awesomplete.list = me.deduplicate(me.options);
+			}, 100));
 
-		}, 100));
+		});
 
 		var open_recent = function() {
 			if (!this.autocomplete_open) {

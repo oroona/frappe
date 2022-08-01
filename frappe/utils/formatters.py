@@ -2,49 +2,35 @@
 # MIT License. See license.txt
 
 from __future__ import unicode_literals
-
-import datetime
-import re
-
-from dateutil.parser import ParserError
-
 import frappe
+import datetime
+from frappe.utils import formatdate, fmt_money, flt, cstr, cint, format_datetime, format_time, format_duration
 from frappe.model.meta import get_field_currency, get_field_precision
-from frappe.utils import (
-	cint,
-	cstr,
-	flt,
-	fmt_money,
-	format_datetime,
-	format_duration,
-	format_time,
-	format_timedelta,
-	formatdate,
-)
+import re
+from six import string_types
 
-
-def format_value(value, df=None, doc=None, currency=None, translated=False, format=None):
-	"""Format value based on given fieldtype, document reference, currency reference.
-	If docfield info (df) is not given, it will try and guess based on the datatype of the value"""
-	if isinstance(df, str):
+def format_value(value, df=None, doc=None, currency=None, translated=False):
+	'''Format value based on given fieldtype, document reference, currency reference.
+	If docfield info (df) is not given, it will try and guess based on the datatype of the value'''
+	if isinstance(df, string_types):
 		df = frappe._dict(fieldtype=df)
 
 	if not df:
 		df = frappe._dict()
 		if isinstance(value, datetime.datetime):
-			df.fieldtype = "Datetime"
+			df.fieldtype = 'Datetime'
 		elif isinstance(value, datetime.date):
-			df.fieldtype = "Date"
+			df.fieldtype = 'Date'
 		elif isinstance(value, datetime.timedelta):
-			df.fieldtype = "Time"
+			df.fieldtype = 'Time'
 		elif isinstance(value, int):
-			df.fieldtype = "Int"
+			df.fieldtype = 'Int'
 		elif isinstance(value, float):
-			df.fieldtype = "Float"
+			df.fieldtype = 'Float'
 		else:
-			df.fieldtype = "Data"
+			df.fieldtype = 'Data'
 
-	elif isinstance(df, dict):
+	elif (isinstance(df, dict)):
 		# Convert dict to object if necessary
 		df = frappe._dict(df)
 
@@ -56,30 +42,23 @@ def format_value(value, df=None, doc=None, currency=None, translated=False, form
 	if not df:
 		return value
 
-	elif df.get("fieldtype") == "Date":
+	elif df.get("fieldtype")=="Date":
 		return formatdate(value)
 
-	elif df.get("fieldtype") == "Datetime":
+	elif df.get("fieldtype")=="Datetime":
 		return format_datetime(value)
 
-	elif df.get("fieldtype") == "Time":
-		try:
-			return format_time(value)
-		except ParserError:
-			return format_timedelta(value)
+	elif df.get("fieldtype")=="Time":
+		return format_time(value)
 
-	elif (
-		value == 0
-		and df.get("fieldtype") in ("Int", "Float", "Currency", "Percent")
-		and df.get("print_hide_if_no_value")
-	):
+	elif value==0 and df.get("fieldtype") in ("Int", "Float", "Currency", "Percent") and df.get("print_hide_if_no_value"):
 		# this is required to show 0 as blank in table columns
 		return ""
 
 	elif df.get("fieldtype") == "Currency":
 		default_currency = frappe.db.get_default("currency")
 		currency = currency or get_field_currency(df, doc) or default_currency
-		return fmt_money(value, precision=get_field_precision(df, doc), currency=currency, format=format)
+		return fmt_money(value, precision=get_field_precision(df, doc), currency=currency)
 
 	elif df.get("fieldtype") == "Float":
 		precision = get_field_precision(df, doc)
@@ -90,7 +69,7 @@ def format_value(value, df=None, doc=None, currency=None, translated=False, form
 		# options should not specified
 		if not df.options and value is not None:
 			temp = cstr(value).split(".")
-			if len(temp) == 1 or cint(temp[1]) == 0:
+			if len(temp)==1 or cint(temp[1])==0:
 				precision = 0
 
 		return fmt_money(value, precision=precision, currency=currency)
@@ -107,9 +86,9 @@ def format_value(value, df=None, doc=None, currency=None, translated=False, form
 
 	elif df.get("fieldtype") == "Table MultiSelect":
 		meta = frappe.get_meta(df.options)
-		link_field = [df for df in meta.fields if df.fieldtype == "Link"][0]
-		values = [v.get(link_field.fieldname, "asdf") for v in value]
-		return ", ".join(values)
+		link_field = [df for df in meta.fields if df.fieldtype == 'Link'][0]
+		values = [v.get(link_field.fieldname, 'asdf') for v in value]
+		return ', '.join(values)
 
 	elif df.get("fieldtype") == "Duration":
 		hide_days = df.hide_days

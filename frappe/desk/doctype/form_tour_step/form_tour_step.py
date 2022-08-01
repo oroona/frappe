@@ -4,6 +4,5 @@
 # import frappe
 from frappe.model.document import Document
 
-
 class FormTourStep(Document):
 	pass

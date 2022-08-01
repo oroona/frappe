@@ -3,11 +3,9 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
-from bs4 import BeautifulSoup
-
 import frappe
+import unittest
+from bs4 import BeautifulSoup
 from frappe.utils import set_request
 from frappe.website.render import render
 

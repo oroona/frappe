@@ -2,9 +2,7 @@
 # MIT License. See license.txt
 
 from __future__ import unicode_literals
-
 import frappe
-
 
 def execute():
 	if frappe.db.exists("DocType", "Event Producer"):

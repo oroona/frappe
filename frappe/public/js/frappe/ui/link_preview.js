@@ -73,7 +73,7 @@ frappe.ui.LinkPreview = class {
 				}
 
 				this.popover_timeout = setTimeout(() => {
-					if (this.popover && this.popover.options) {
+					if (this.popover) {
 						let new_content = this.get_popover_html(preview_data);
 						this.popover.options.content = new_content;
 					} else {

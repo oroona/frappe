@@ -22,10 +22,10 @@ import "air-datepicker/dist/js/i18n/datepicker.zh.js";
 		months: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'اكتوبر', 'نوفمبر', 'ديسمبر'],
 		monthsShort: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'اكتوبر', 'نوفمبر', 'ديسمبر'],
 		today: 'اليوم',
-		clear: 'حذف',
+		clear: 'Clear',
 		dateFormat: 'dd/mm/yyyy',
 		timeFormat: 'hh:ii aa',
-		firstDay: 6
+		firstDay: 0
 	};
 })(jQuery);
 

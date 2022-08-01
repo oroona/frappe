@@ -63,11 +63,10 @@ frappe.search.utils = {
 				}
 			} else if (['List', 'Tree', 'Workspaces', 'query-report'].includes(match[1][0]) && (match[1].length > 1)) {
 				var type = match[1][0], label = type;
-				if (type==='Workspaces') label = 'Workspace';
-				else if (type==='query-report' || match[1][2] ==='Report') label = 'Report';
-				out.label = __(`{0} ${label}`, [__(match[1][1]).bold()]);
-				out.value = __(`{0} ${label}`, [__(match[1][1])]);
-
+				if(type==='Workspaces') label = 'Workspace';
+				else if(type==='query-report' || match[1][2] ==='Report') label = 'Report';
+				out.label = __(match[1][1]).bold() + " " + __(label);
+				out.value = __(match[1][1]) + " " + __(label);
 			} else if (match[0]) {
 				out.label = match[0].bold();
 				out.value = match[0];
@@ -156,17 +155,13 @@ frappe.search.utils = {
 			// check to skip extra list in the text
 			// eg. Price List List should be only Price List
 			let skip_list = type === 'List' && target.endsWith('List');
-			let label_without_type = me.bolden_match_part(__(target), keywords);
-			if (skip_list) {
-				var label = label_without_type;
-			} else {
-				label = __(`{0} ${skip_list ? '' : type}`, [label_without_type]);
-			}
+			let label = me.bolden_match_part(__(target), keywords);
+			label += skip_list ? '' : ` ${__(type)}`;
 
 			return {
 				type: type,
 				label: label,
-				value: __(`{0} ${type}`, [target]),
+				value: __(target + " " + type),
 				index: level + order,
 				match: target,
 				route: route,

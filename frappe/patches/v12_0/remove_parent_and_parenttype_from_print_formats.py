@@ -1,9 +1,7 @@
 import frappe
 
-
 def execute():
-	frappe.db.sql(
-		"""
+    frappe.db.sql("""
         UPDATE
             `tabPrint Format`
         SET
@@ -13,5 +11,4 @@ def execute():
         WHERE
             `tabPrint Format`.parent != ''
             OR `tabPrint Format`.parenttype != ''
-        """
-	)
+        """)

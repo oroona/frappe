@@ -3,10 +3,8 @@
 # See license.txt
 from __future__ import unicode_literals
 
-import unittest
-
 import frappe
-
+import unittest
 
 class TestEmailRule(unittest.TestCase):
 	pass

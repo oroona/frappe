@@ -11,7 +11,9 @@ frappe.user_info = function(uid) {
 	}
 
 	if(!(frappe.boot.user_info && frappe.boot.user_info[uid])) {
-		var user_info = {fullname: uid || "Unknown"};
+		var user_info = {
+			fullname: frappe.utils.capitalize(uid.split("@")[0]) || "Unknown"
+		};
 	} else {
 		var user_info = frappe.boot.user_info[uid];
 	}

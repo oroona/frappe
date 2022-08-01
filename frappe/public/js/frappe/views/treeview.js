@@ -21,19 +21,6 @@ frappe.views.TreeFactory = class TreeFactory extends frappe.views.Factory {
 			frappe.views.trees[options.doctype] = new frappe.views.TreeView(options);
 		});
 	}
-
-	on_show() {
-		/**
-		 * When the the treeview is visited using the previous button,
-		 * the framework just show the treeview element that is hidden.
-		 * Due to this, the data of the tree can be old.
-		 * To deal with this, the tree will be refreshed whenever the
-		 * treeview is visible.
-		 */
-		let route = frappe.get_route();
-		let treeview = frappe.views.trees[route[1]];
-		treeview && treeview.make_tree();
-	}
 }
 
 frappe.views.TreeView = Class.extend({
@@ -178,7 +165,6 @@ frappe.views.TreeView = Class.extend({
 
 			get_label: this.opts.get_label,
 			on_render: this.opts.onrender,
-			on_get_node: this.opts.on_get_node,
 			on_click: (node) => { this.select_node(node); },
 		});
 
@@ -255,7 +241,6 @@ frappe.views.TreeView = Class.extend({
 					frappe.model.rename_doc(me.doctype, node.label, function(new_name) {
 						node.$tree_link.find('a').text(new_name);
 						node.label = new_name;
-						me.tree.refresh();
 					});
 				},
 				btnClass: "hidden-xs"
@@ -331,7 +316,10 @@ frappe.views.TreeView = Class.extend({
 				args: args,
 				callback: function(r) {
 					if(!r.exc) {
-						me.tree.load_children(node);
+						if(node.expanded) {
+							me.tree.toggle_node(node);
+						}
+						me.tree.load_children(node, true);
 					}
 				},
 				always: function() {
@@ -422,9 +410,7 @@ frappe.views.TreeView = Class.extend({
 			},
 		];
 
-		if (frappe.user.has_role('System Manager') &&
-			frappe.meta.has_field(me.doctype, "lft") &&
-			frappe.meta.has_field(me.doctype, "rgt")) {
+		if (frappe.user.has_role('System Manager')) {
 			this.menu_items.push(
 				{
 					label: __('Rebuild Tree'),

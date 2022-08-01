@@ -131,13 +131,14 @@
 		}
 	}
 
-	.select-like, .file-select {
+	.select-like {
 		padding: 15px 0px 15px 15px;
 	}
 }
 
 .list-row-head {
 	@extend .list-row;
+	padding: 15px;
 	cursor: default;
 
 	.list-subject {
@@ -168,7 +169,7 @@ $level-margin-right: 8px;
 		color: var(--text-color);
 	}
 
-	.level-item:not(.file-select) {
+	.level-item {
 		margin-right: $level-margin-right;
 	}
 
@@ -178,30 +179,7 @@ $level-margin-right: 8px;
 }
 
 .list-paging-area, .footnote-area {
-	border-top: 1px solid var(--border-color);
-
-	.btn-group {
-		box-shadow: var(--drop-shadow);
-		border-radius: var(--border-radius-md);
-
-		&> .btn:nth-child(2) {
-			border-left: none;
-			border-right: none;
-		}
-
-		.btn-paging {
-			box-shadow: none;
-			margin-left: 0px !important;
-			border: 1px solid var(--dark-border-color);
-
-			&.btn-info {
-				background-color: var(--gray-400);
-				border-color: var(--gray-400);
-				color: var(--white);
-				font-weight: var(--text-bold);
-			}
-		}
-	}
+	border-top: 1px sol var(--border-color);
 }
 
 .frappe-card {
@@ -227,10 +205,6 @@ input.list-check-all, input.list-row-checkbox {
 	--checkbox-right-margin: calc(var(--checkbox-size) / 2 + #{$level-margin-right});
 }
 
-input.list-check-all {
-	margin-left: 15px;
-}
-
 .render-list-checkbox {
 	margin-left: 15px;
 }
@@ -244,11 +218,6 @@ input.list-check-all {
 		position: sticky !important;
 		z-index: 500;
 		top: 0;
-	}
-
-	.sortable-handle {
-		cursor: all-scroll;
-		cursor: grabbing;
 	}
 }
 

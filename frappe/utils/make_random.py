@@ -1,18 +1,13 @@
 from __future__ import unicode_literals
-
-import random
-
-from six import string_types
+import frappe, random
 from six.moves import range
-
-import frappe
+from six import string_types
 
 settings = frappe._dict(
-	prob={
-		"default": {"make": 0.6, "qty": (1, 5)},
+	prob = {
+		"default": { "make": 0.6, "qty": (1,5) },
 	}
 )
-
 
 def add_random_children(doc, fieldname, rows, randomize, unique=None):
 	nrows = rows
@@ -28,27 +23,23 @@ def add_random_children(doc, fieldname, rows, randomize, unique=None):
 				d[key] = random.randrange(*val)
 
 		if unique:
-			if not doc.get(fieldname, {unique: d[unique]}):
+			if not doc.get(fieldname, {unique:d[unique]}):
 				doc.append(fieldname, d)
 		else:
 			doc.append(fieldname, d)
-
 
 def get_random(doctype, filters=None, doc=False):
 	condition = []
 	if filters:
 		for key, val in filters.items():
-			condition.append("%s='%s'" % (key, str(val).replace("'", "'")))
+			condition.append("%s='%s'" % (key, str(val).replace("'", "\'")))
 	if condition:
 		condition = " where " + " and ".join(condition)
 	else:
 		condition = ""
 
-	out = frappe.db.sql(
-		"""select name from `tab%s` %s
-		order by RAND() limit 0,1"""
-		% (doctype, condition)
-	)
+	out = frappe.db.sql("""select name from `tab%s` %s
+		order by RAND() limit 0,1""" % (doctype, condition))
 
 	out = out and out[0][0] or None
 
@@ -57,10 +48,8 @@ def get_random(doctype, filters=None, doc=False):
 	else:
 		return out
 
-
 def can_make(doctype):
 	return random.random() < settings.prob.get(doctype, settings.prob["default"])["make"]
-
 
 def how_many(doctype):
 	return random.randrange(*settings.prob.get(doctype, settings.prob["default"])["qty"])

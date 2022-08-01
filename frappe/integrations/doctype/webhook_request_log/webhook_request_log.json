@@ -1,6 +1,6 @@
 {
  "actions": [],
- "autoname": "hash",
+ "autoname": "WEBHOOK-REQ-.#####",
  "creation": "2021-05-24 21:35:59.104776",
  "doctype": "DocType",
  "editable_grid": 1,
@@ -56,11 +56,10 @@
  "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2022-05-03 09:33:49.240777",
+ "modified": "2021-05-26 23:57:58.495261",
  "modified_by": "Administrator",
  "module": "Integrations",
  "name": "Webhook Request Log",
- "naming_rule": "Random",
  "owner": "Administrator",
  "permissions": [
   {
@@ -78,6 +77,5 @@
  ],
  "sort_field": "modified",
  "sort_order": "DESC",
- "states": [],
  "track_changes": 1
 }

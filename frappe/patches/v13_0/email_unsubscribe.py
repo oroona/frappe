@@ -1,10 +1,9 @@
 import frappe
 
-
 def execute():
 	email_unsubscribe = [
 		{"email": "admin@example.com", "global_unsubscribe": 1},
-		{"email": "guest@example.com", "global_unsubscribe": 1},
+		{"email": "guest@example.com", "global_unsubscribe": 1}
 	]
 
 	for unsubscribe in email_unsubscribe:

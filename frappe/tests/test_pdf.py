@@ -2,17 +2,13 @@
 # MIT License. See license.txt
 from __future__ import unicode_literals
 
-import io
 import unittest
 
-import six
+import frappe.utils.pdf as pdfgen
+import frappe, io, six
 from PyPDF2 import PdfFileReader
 
-import frappe
-import frappe.utils.pdf as pdfgen
-
-
-# class TestPdfBorders(unittest.TestCase):
+#class TestPdfBorders(unittest.TestCase):
 class TestPdf(unittest.TestCase):
 	@property
 	def html(self):
@@ -39,9 +35,9 @@ class TestPdf(unittest.TestCase):
 
 	def test_read_options_from_html(self):
 		_, html_options = pdfgen.read_options_from_html(self.html)
-		self.assertTrue(html_options["margin-top"] == "0")
-		self.assertTrue(html_options["margin-left"] == "10")
-		self.assertTrue(html_options["margin-right"] == "0")
+		self.assertTrue(html_options['margin-top'] == '0')
+		self.assertTrue(html_options['margin-left'] == '10')
+		self.assertTrue(html_options['margin-right'] == '0')
 
 	def test_pdf_encryption(self):
 		password = "qwe"

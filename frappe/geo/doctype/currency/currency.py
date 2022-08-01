@@ -2,11 +2,10 @@
 # License: See license.txt
 
 from __future__ import unicode_literals
-
 import frappe
-from frappe import _, throw
-from frappe.model.document import Document
+from frappe import throw, _
 
+from frappe.model.document import Document
 
 class Currency(Document):
 	def validate(self):

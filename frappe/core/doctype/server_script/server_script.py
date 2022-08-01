@@ -9,9 +9,9 @@ from types import FunctionType, MethodType, ModuleType
 from typing import Dict, List
 
 import frappe
-from frappe import _
 from frappe.model.document import Document
-from frappe.utils.safe_exec import NamespaceDict, get_safe_globals, safe_exec
+from frappe.utils.safe_exec import get_safe_globals, safe_exec, NamespaceDict
+from frappe import _
 
 
 class ServerScript(Document):
@@ -37,8 +37,10 @@ class ServerScript(Document):
 			fields=["name", "stopped"],
 		)
 
+
 	def sync_scheduled_jobs(self):
-		"""Sync Scheduled Job Type statuses if Server Script's disabled status is changed"""
+		"""Sync Scheduled Job Type statuses if Server Script's disabled status is changed
+		"""
 		if self.script_type != "Scheduler Event" or not self.has_value_changed("disabled"):
 			return
 
@@ -49,12 +51,14 @@ class ServerScript(Document):
 				job.save()
 
 	def sync_scheduler_events(self):
-		"""Create or update Scheduled Job Type documents for Scheduler Event Server Scripts"""
+		"""Create or update Scheduled Job Type documents for Scheduler Event Server Scripts
+		"""
 		if not self.disabled and self.event_frequency and self.script_type == "Scheduler Event":
 			setup_scheduler_events(script_name=self.name, frequency=self.event_frequency)
 
 	def clear_scheduled_events(self):
-		"""Deletes existing scheduled jobs by Server Script if self.event_frequency has changed"""
+		"""Deletes existing scheduled jobs by Server Script if self.event_frequency has changed
+		"""
 		if self.script_type == "Scheduler Event" and self.has_value_changed("event_frequency"):
 			for scheduled_job in self.scheduled_jobs:
 				frappe.delete_doc("Scheduled Job Type", scheduled_job.name)
@@ -63,11 +67,11 @@ class ServerScript(Document):
 		"""Specific to API endpoint Server Scripts
 
 		Raises:
-		        frappe.DoesNotExistError: If self.script_type is not API
-		        frappe.PermissionError: If self.allow_guest is unset for API accessed by Guest user
+			frappe.DoesNotExistError: If self.script_type is not API
+			frappe.PermissionError: If self.allow_guest is unset for API accessed by Guest user
 
 		Returns:
-		        dict: Evaluates self.script with frappe.utils.safe_exec.safe_exec and returns the flags set in it's safe globals
+			dict: Evaluates self.script with frappe.utils.safe_exec.safe_exec and returns the flags set in it's safe globals
 		"""
 		# wrong report type!
 		if self.script_type != "API":
@@ -85,15 +89,15 @@ class ServerScript(Document):
 		"""Specific to Document Event triggered Server Scripts
 
 		Args:
-		        doc (Document): Executes script with for a certain document's events
+			doc (Document): Executes script with for a certain document's events
 		"""
-		safe_exec(self.script, _locals={"doc": doc}, restrict_commit_rollback=True)
+		safe_exec(self.script, _locals={"doc": doc})
 
 	def execute_scheduled_method(self):
 		"""Specific to Scheduled Jobs via Server Scripts
 
 		Raises:
-		        frappe.DoesNotExistError: If script type is not a scheduler event
+			frappe.DoesNotExistError: If script type is not a scheduler event
 		"""
 		if self.script_type != "Scheduler Event":
 			raise frappe.DoesNotExistError
@@ -104,10 +108,10 @@ class ServerScript(Document):
 		"""Specific to Permission Query Server Scripts
 
 		Args:
-		        user (str): Takes user email to execute script and return list of conditions
+			user (str): Takes user email to execute script and return list of conditions
 
 		Returns:
-		        list: Returns list of conditions defined by rules in self.script
+			list: Returns list of conditions defined by rules in self.script
 		"""
 		locals = {"user": user, "conditions": ""}
 		safe_exec(self.script, None, locals)
@@ -120,22 +124,21 @@ class ServerScript(Document):
 		that is used while executing a Server Script.
 
 		Returns:
-		        list: Returns list of autocompletion items.
-		        For e.g., ["frappe.utils.cint", "frappe.db.get_all", ...]
+			list: Returns list of autocompletion items.
+			For e.g., ["frappe.utils.cint", "frappe.db.get_all", ...]
 		"""
-
 		def get_keys(obj):
 			out = []
 			for key in obj:
-				if key.startswith("_"):
+				if key.startswith('_'):
 					continue
 				value = obj[key]
 				if isinstance(value, (NamespaceDict, dict)) and value:
-					if key == "form_dict":
-						out.append(["form_dict", 7])
+					if key == 'form_dict':
+						out.append(['form_dict', 7])
 						continue
 					for subkey, score in get_keys(value):
-						fullkey = f"{key}.{subkey}"
+						fullkey = f'{key}.{subkey}'
 						out.append([fullkey, score])
 				else:
 					if isinstance(value, type) and issubclass(value, Exception):
@@ -153,11 +156,11 @@ class ServerScript(Document):
 					out.append([key, score])
 			return out
 
-		items = frappe.cache().get_value("server_script_autocompletion_items")
+		items = frappe.cache().get_value('server_script_autocompletion_items')
 		if not items:
 			items = get_keys(get_safe_globals())
-			items = [{"value": d[0], "score": d[1]} for d in items]
-			frappe.cache().set_value("server_script_autocompletion_items", items)
+			items = [{'value': d[0], 'score': d[1]} for d in items]
+			frappe.cache().set_value('server_script_autocompletion_items', items)
 		return items
 
 
@@ -166,8 +169,8 @@ def setup_scheduler_events(script_name, frequency):
 	"""Creates or Updates Scheduled Job Type documents based on the specified script name and frequency
 
 	Args:
-	        script_name (str): Name of the Server Script document
-	        frequency (str): Event label compatible with the Frappe scheduler
+		script_name (str): Name of the Server Script document
+		frequency (str): Event label compatible with the Frappe scheduler
 	"""
 	method = frappe.scrub(f"{script_name}-{frequency}")
 	scheduled_script = frappe.db.get_value("Scheduled Job Type", {"method": method})
@@ -193,4 +196,6 @@ def setup_scheduler_events(script_name, frequency):
 		doc.frequency = frequency
 		doc.save()
 
-		frappe.msgprint(_("Scheduled execution for script {0} has updated").format(script_name))
+		frappe.msgprint(
+			_("Scheduled execution for script {0} has updated").format(script_name)
+		)

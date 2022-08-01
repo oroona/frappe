@@ -2,7 +2,6 @@
 # MIT License. See license.txt
 
 from __future__ import unicode_literals
-
 import frappe
 
 
@@ -16,6 +15,6 @@ def execute():
 		try:
 			doc.generate_bootstrap_theme()
 			doc.save()
-		except Exception:
-			print("Ignoring....")
+		except: # noqa: E722
+			print('Ignoring....')
 			print(frappe.get_traceback())

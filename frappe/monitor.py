@@ -4,15 +4,14 @@
 
 from __future__ import unicode_literals
 
-import json
-import os
-import traceback
-import uuid
 from datetime import datetime
-
+import json
+import traceback
+import frappe
+import os
+import uuid
 import rq
 
-import frappe
 
 MONITOR_REDIS_KEY = "monitor-transactions"
 MONITOR_MAX_ENTRIES = 1000000

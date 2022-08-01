@@ -31,7 +31,6 @@ frappe.provide('frappe.utils');
 frappe.provide('frappe.model');
 frappe.provide('frappe.user');
 frappe.provide('frappe.session');
-frappe.provide("frappe._messages");
 frappe.provide('locals.DocType');
 
 // for listviews
