@@ -1,5 +1,6 @@
 import 'cypress-file-upload';
 import '@testing-library/cypress/add-commands';
+import '@4tw/cypress-drag-drop';
 // ***********************************************
 // This example commands.js shows you how to
 // create various custom commands and overwrite
@@ -110,34 +111,6 @@ Cypress.Commands.add('get_doc', (doctype, name) => {
 		});
 });
 
-Cypress.Commands.add('insert_doc', (doctype, args, ignore_duplicate) => {
-	return cy
-		.window()
-		.its('frappe.csrf_token')
-		.then(csrf_token => {
-			return cy
-				.request({
-					method: 'POST',
-					url: `/api/resource/${doctype}`,
-					body: args,
-					headers: {
-						Accept: 'application/json',
-						'Content-Type': 'application/json',
-						'X-Frappe-CSRF-Token': csrf_token
-					},
-					failOnStatusCode: !ignore_duplicate
-				})
-				.then(res => {
-					let status_codes = [200];
-					if (ignore_duplicate) {
-						status_codes.push(409);
-					}
-					expect(res.status).to.be.oneOf(status_codes);
-					return res.body;
-				});
-		});
-});
-
 Cypress.Commands.add('remove_doc', (doctype, name) => {
 	return cy
 		.window()
@@ -187,13 +160,14 @@ Cypress.Commands.add('fill_field', (fieldname, value, fieldtype = 'Data') => {
 	if (fieldtype === 'Select') {
 		cy.get('@input').select(value);
 	} else {
-		cy.get('@input').type(value, {waitForAnimations: false, force: true});
+		cy.get('@input').type(value, {waitForAnimations: false, force: true, delay: 100});
 	}
 	return cy.get('@input');
 });
 
 Cypress.Commands.add('get_field', (fieldname, fieldtype = 'Data') => {
-	let selector = `[data-fieldname="${fieldname}"] input:visible`;
+	let field_element = fieldtype === 'Select' ? 'select': 'input';
+	let selector = `[data-fieldname="${fieldname}"] ${field_element}:visible`;
 
 	if (fieldtype === 'Text Editor') {
 		selector = `[data-fieldname="${fieldname}"] .ql-editor[contenteditable=true]:visible`;
@@ -241,7 +215,7 @@ Cypress.Commands.add('get_table_field', (tablefieldname, row_idx, fieldname, fie
 });
 
 Cypress.Commands.add('awesomebar', text => {
-	cy.get('#navbar-search').type(`${text}{downarrow}{enter}`, {delay: 100});
+	cy.get('#navbar-search').type(`${text}{downarrow}{enter}`, {delay: 700});
 });
 
 Cypress.Commands.add('new_form', doctype => {
@@ -252,7 +226,8 @@ Cypress.Commands.add('new_form', doctype => {
 });
 
 Cypress.Commands.add('go_to_list', doctype => {
-	cy.visit(`/app/list/${doctype}/list`);
+	let dt_in_route = doctype.toLowerCase().replace(/ /g, '-');
+	cy.visit(`/app/${dt_in_route}`);
 });
 
 Cypress.Commands.add('clear_cache', () => {
@@ -316,28 +291,44 @@ Cypress.Commands.add('add_filter', () => {
 });
 
 Cypress.Commands.add('clear_filters', () => {
-	cy.get('.filter-section .filter-button').click();
+	let has_filter = false;
+	cy.intercept({
+		method: 'POST',
+		url: 'api/method/frappe.model.utils.user_settings.save'
+	}).as('filter-saved');
+	cy.get('.filter-section .filter-button').click({force: true});
 	cy.wait(300);
 	cy.get('.filter-popover').should('exist');
+	cy.get('.filter-popover').then(popover => {
+		if (popover.find('input.input-with-feedback')[0].value != '') {
+			has_filter = true;
+		}
+	});
 	cy.get('.filter-popover').find('.clear-filters').click();
 	cy.get('.filter-section .filter-button').click();
 	cy.window().its('cur_list').then(cur_list => {
 		cur_list && cur_list.filter_area && cur_list.filter_area.clear();
+		has_filter && cy.wait('@filter-saved');
 	});
-
-	
 });
 
 Cypress.Commands.add('click_modal_primary_button', (btn_name) => {
 	cy.get('.modal-footer > .standard-actions > .btn-primary').contains(btn_name).trigger('click', {force: true});
 });
 
-Cypress.Commands.add('click_sidebar_button', (btn_no) => {
-	cy.get('.list-group-by-fields > .group-by-field > .btn').eq(btn_no).click();
+Cypress.Commands.add('click_sidebar_button', (btn_name) => {
+	cy.get('.list-group-by-fields .list-link > a').contains(btn_name).click({force: true});
 });
 
 Cypress.Commands.add('click_listview_row_item', (row_no) => {
-	cy.get('.list-row > .level-left > .list-subject > .bold > .ellipsis').eq(row_no).click({force: true});
+	cy.get('.list-row > .level-left > .list-subject > .level-item > .ellipsis').eq(row_no).click({force: true});
+});
+
+Cypress.Commands.add('click_listview_row_item_with_text', (text) => {
+	cy.get('.list-row > .level-left > .list-subject > .level-item > .ellipsis')
+		.contains(text)
+		.first()
+		.click({force: true});
 });
 
 Cypress.Commands.add('click_filter_button', () => {
@@ -348,6 +339,10 @@ Cypress.Commands.add('click_listview_primary_button', (btn_name) => {
 	cy.get('.primary-action').contains(btn_name).click({force: true});
 });
 
-Cypress.Commands.add('click_timeline_action_btn', (btn_no) => {
-	cy.get('.timeline-content > .timeline-message-box > .justify-between > .actions > .btn').eq(btn_no).first().click();
+Cypress.Commands.add('click_timeline_action_btn', (btn_name) => {
+	cy.get('.timeline-message-box .actions .action-btn').contains(btn_name).click();
+});
+
+Cypress.Commands.add('select_listview_row_checkbox', (row_no) => {
+	cy.get('.frappe-list .select-like > .list-row-checkbox').eq(row_no).click();
 });
